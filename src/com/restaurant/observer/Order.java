@@ -1,15 +1,35 @@
 package com.restaurant.observer;
 
+import com.restaurant.factory.Meal;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Order implements Subject {
 
     private List<Observer> observers = new ArrayList<>();
+
+    private int orderId;
+    private Meal meal;
     private OrderStatus status;
 
     public Order() {
         this.status = OrderStatus.CREATED;
+    }
+
+    public int getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(int orderId) {
+        this.orderId = orderId;
+    }
+
+    public Meal getMeal() {
+        return meal;
+    }
+
+    public void setMeal(Meal meal) {
+        this.meal = meal;
     }
 
     public void setStatus(OrderStatus status) {

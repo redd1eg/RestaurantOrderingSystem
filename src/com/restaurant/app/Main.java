@@ -2,23 +2,23 @@ package com.restaurant.app;
 
 import com.restaurant.factory.Meal;
 import com.restaurant.factory.MealFactory;
+
 import com.restaurant.decorator.CheeseDecorator;
 import com.restaurant.decorator.MeatDecorator;
 import com.restaurant.decorator.ExtraSauceDecorator;
-import com.restaurant.observer.Order;
-import com.restaurant.observer.OrderStatus;
-import com.restaurant.observer.KitchenObserver;
-import com.restaurant.observer.CustomerObserver;
-import com.restaurant.strategy.PriceCalculator;
-import com.restaurant.strategy.NoDiscount;
-import com.restaurant.strategy.TenPercentDiscount;
-import com.restaurant.strategy.VIPDiscount;
+
+import com.restaurant.observer.*;
+
+import com.restaurant.strategy.*;
+
+import com.restaurant.bridge.*;
+import com.restaurant.facade.RestaurantOrderFacade;
 
 public class Main {
     public static void main(String[] args) {
 
-        // ====== Factory + Decorator ======
-        System.out.println("=== Meal with Toppings ===");
+
+        System.out.println("=== Meal with Toppings (Factory + Decorator) ===");
         MealFactory factory = new MealFactory();
 
         Meal meal = factory.createMeal("pizza");
@@ -27,13 +27,13 @@ public class Main {
         meal = new ExtraSauceDecorator(meal);
 
         System.out.println("Your order: " + meal.getName());
-        System.out.println("Total price: $" + String.format("%.2f", meal.getPrice()));
+        System.out.println("Price: $" + String.format("%.2f", meal.getPrice()));
 
-        // ====== Observer ======
-        System.out.println("\n=== Order status notifications ===");
+
+
+        System.out.println("\n=== Order Status Notifications (Observer) ===");
 
         Order order = new Order();
-
         order.addObserver(new KitchenObserver());
         order.addObserver(new CustomerObserver());
 
@@ -41,20 +41,49 @@ public class Main {
         order.setStatus(OrderStatus.READY);
         order.setStatus(OrderStatus.COMPLETED);
 
-        // ====== Strategy ======
-        System.out.println("\n=== Price with Strategy ===");
+
+
+        System.out.println("\n=== Price with Discount Strategies (Strategy) ===");
+
         PriceCalculator calculator = new PriceCalculator();
 
-        // Без скидки
         calculator.setStrategy(new NoDiscount());
-        System.out.println("No discount: $" + String.format("%.2f", calculator.calculate(meal.getPrice())));
+        System.out.println("No discount: $" +
+                String.format("%.2f", calculator.calculate(meal.getPrice())));
 
-        // 10% скидка
         calculator.setStrategy(new TenPercentDiscount());
-        System.out.println("10% discount: $" + String.format("%.2f", calculator.calculate(meal.getPrice())));
+        System.out.println("10% discount: $" +
+                String.format("%.2f", calculator.calculate(meal.getPrice())));
 
-        // VIP скидка 20%
         calculator.setStrategy(new VIPDiscount());
-        System.out.println("VIP discount: $" + String.format("%.2f", calculator.calculate(meal.getPrice())));
+        System.out.println("VIP discount (20%): $" +
+                String.format("%.2f", calculator.calculate(meal.getPrice())));
+
+
+
+        System.out.println("\n=== Delivery Options (Bridge) ===");
+
+        DeliveryType dineIn = new DineInDelivery(new TableDeliveryImplementor());
+        DeliveryType takeaway = new TakeawayDelivery(new SelfPickupImplementor());
+        DeliveryType courier = new CourierDelivery(new CourierImplementor());
+
+        System.out.println("Dine-in delivery:");
+        dineIn.deliverOrder(101);
+
+        System.out.println("\nTakeaway delivery:");
+        takeaway.deliverOrder(102);
+
+        System.out.println("\nCourier delivery:");
+        courier.deliverOrder(103);
+
+
+
+        System.out.println("\n=== Final Order via Facade ===");
+
+        RestaurantOrderFacade facade = new RestaurantOrderFacade();
+
+        int finalOrderId = facade.placeOrder(meal, courier);
+
+        System.out.println("\nOrder completed. Final ID = " + finalOrderId);
     }
 }
