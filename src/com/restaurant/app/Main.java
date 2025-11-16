@@ -9,6 +9,10 @@ import com.restaurant.observer.Order;
 import com.restaurant.observer.OrderStatus;
 import com.restaurant.observer.KitchenObserver;
 import com.restaurant.observer.CustomerObserver;
+import com.restaurant.strategy.PriceCalculator;
+import com.restaurant.strategy.NoDiscount;
+import com.restaurant.strategy.TenPercentDiscount;
+import com.restaurant.strategy.VIPDiscount;
 
 public class Main {
     public static void main(String[] args) {
@@ -36,5 +40,21 @@ public class Main {
         order.setStatus(OrderStatus.COOKING);
         order.setStatus(OrderStatus.READY);
         order.setStatus(OrderStatus.COMPLETED);
+
+        // ====== Strategy ======
+        System.out.println("\n=== Price with Strategy ===");
+        PriceCalculator calculator = new PriceCalculator();
+
+        // Без скидки
+        calculator.setStrategy(new NoDiscount());
+        System.out.println("No discount: $" + String.format("%.2f", calculator.calculate(meal.getPrice())));
+
+        // 10% скидка
+        calculator.setStrategy(new TenPercentDiscount());
+        System.out.println("10% discount: $" + String.format("%.2f", calculator.calculate(meal.getPrice())));
+
+        // VIP скидка 20%
+        calculator.setStrategy(new VIPDiscount());
+        System.out.println("VIP discount: $" + String.format("%.2f", calculator.calculate(meal.getPrice())));
     }
 }
