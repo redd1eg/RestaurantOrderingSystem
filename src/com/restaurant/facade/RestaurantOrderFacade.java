@@ -1,34 +1,41 @@
 package com.restaurant.facade;
 
 import com.restaurant.factory.Meal;
-import com.restaurant.observer.Order;
-import com.restaurant.observer.OrderStatus;
-import com.restaurant.observer.CustomerObserver;
-import com.restaurant.observer.KitchenObserver;
+import com.restaurant.factory.MealFactory;
+import com.restaurant.strategy.PriceStrategy;
 import com.restaurant.bridge.DeliveryType;
+import com.restaurant.observer.Order;
+import com.restaurant.observer.OrderObserver;
+
+import java.util.UUID;
+import java.util.logging.Logger;
 
 public class RestaurantOrderFacade {
+    private static final Logger logger = Logger.getLogger(RestaurantOrderFacade.class.getName());
 
-        public int placeOrder(Meal meal, DeliveryType delivery) {
+    private final MealFactory mealFactory;
+    private final PriceStrategy defaultStrategy;
 
-                // Создаем заказ (Observer)
-                Order order = new Order();
-                order.addObserver(new KitchenObserver());
-                order.addObserver(new CustomerObserver());
+    public RestaurantOrderFacade(MealFactory mealFactory, PriceStrategy defaultStrategy) {
+        this.mealFactory = mealFactory;
+        this.defaultStrategy = defaultStrategy;
+    }
 
-                // Присваиваем ID заказа
-                int orderId = (int)(Math.random() * 10000);
-                order.setOrderId(orderId);
-                order.setMeal(meal);
+    public String placeOrder(String mealType, DeliveryType delivery, PriceStrategy strategy) {
 
-                // Статусы заказа
-                order.setStatus(OrderStatus.COOKING);
-                order.setStatus(OrderStatus.READY);
-                order.setStatus(OrderStatus.COMPLETED);
+        Meal meal = mealFactory.createMeal(mealType);
+        logger.info("Created meal: " + meal.getName());
 
-                // Доставка (Bridge)
-                delivery.deliverOrder(orderId);
+        double basePrice = meal.getPrice();
+        double finalPrice = (strategy != null ? strategy : defaultStrategy).calculatePrice(basePrice);
+        logger.info("Calculated final price: " + finalPrice);
 
-                return orderId;
-        }
+        Order order = new Order(UUID.randomUUID().toString(), meal, finalPrice);
+
+        order.addObserver((order1) -> logger.info("Observer: order " + order1.getId() + " changed status to " + order1.getStatus()));
+
+        delivery.deliverOrder(order.getId());
+
+        return order.getId();
+    }
 }
